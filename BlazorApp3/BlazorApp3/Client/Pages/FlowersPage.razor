@@ -1,0 +1,88 @@
+﻿@page "/Flower"
+@using BlazorApp3.Shared;
+@using BlazorApp3.Client.Serveses
+@inject FlowerServes FlowersService
+
+<h3>Flowers</h3>
+
+@if (flowers == null)
+{
+    <p><em>Loading Flowers...</em></p>
+}
+else if (selectedFlower == null && !addingFlower)
+{
+    <ul>
+        @foreach (var flower in flowers)
+        {
+            <li>
+                <a href="javascript:void(0)" @onclick="() => ShowFlowerDetails(flower.FlowerId)">
+                    @flower.Title
+                </a>
+            </li>
+        }
+    </ul>
+    <button @onclick="StartAddingFlower">Add New Flower</button>
+}
+else if (selectedFlower != null)
+{
+    <h4>Flower Details</h4>
+    <p><strong>Title:</strong> @selectedFlower.Title</p>
+    <p><strong>Description:</strong> @selectedFlower.Description</p>
+    <button @onclick="ClearSelectedFlower">Back to List</button>
+}
+else if (addingFlower)
+{
+    <h4>Add New Flower</h4>
+    <EditForm Model="newFlower" OnValidSubmit="HandleAddFlower">
+        <div>
+            <label>Title:</label>
+            <InputText @bind-Value="newFlower.Title" />
+        </div>
+        <div>
+            <label>Description:</label>
+            <InputTextArea @bind-Value="newFlower.Description" />
+        </div>
+        <button type="submit">Submit</button>
+        <button type="button" @onclick="CancelAddFlower">Cancel</button>
+    </EditForm>
+}
+
+@code {
+    private List<Flower> flowers;
+    private Flower selectedFlower;
+    private Flower newFlower = new Flower();
+    private bool addingFlower = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        flowers = await FlowersService.GetAllFlowers();
+    }
+
+    private async Task ShowFlowerDetails(int id)
+    {
+        selectedFlower = await FlowersService.GetFlowerById(id);
+    }
+
+    private void ClearSelectedFlower()
+    {
+        selectedFlower = null;
+    }
+
+    private void StartAddingFlower()
+    {
+        addingFlower = true;
+        newFlower = new Flower(); // Reset form
+    }
+
+    private async Task HandleAddFlower()
+    {
+        var addedFlower = await FlowersService.AddFlower(newFlower);
+        flowers.Add(addedFlower);
+        addingFlower = false;
+    }
+
+    private void CancelAddFlower()
+    {
+        addingFlower = false;
+    }
+}
